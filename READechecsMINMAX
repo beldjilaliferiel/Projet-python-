@@ -1,1 +1,82 @@
+Minimax
+
+L'idée : dans un jeu à deux joueurs à somme nulle (ce que l'un gagne, l'autre le perd), on suppose que l'adversaire joue le mieux possible contre toi. Donc pour choisir ton coup, tu dois anticiper sa meilleure réponse, et choisir le coup qui te laisse dans la meilleure position après cette réponse optimale.
+
+Un joueur maximise le score (les Blancs, par convention : score positif = bon pour eux).
+L'autre minimise le score (les Noirs).
+
+On construit un arbre :
+
+Position actuelle (à toi de jouer, tu maximises)
+ ├── Coup A → position après A (adversaire minimise)
+ │      ├── Réponse A1 → score évalué
+ │      └── Réponse A2 → score évalué
+ ├── Coup B → position après B (adversaire minimise)
+ │      ├── ...
+
+On descend jusqu'à une certaine profondeur (depth), ou jusqu'à une position terminale (mat/pat). Là, on appelle evaluat() pour avoir un score numérique. Puis on "remonte" l'arbre :
+
+À un niveau où c'est à l'adversaire de jouer, on prend le minimum des scores des enfants (il choisira ce qui est pire pour toi).
+À un niveau où c'est à toi de jouer, on prend le maximum.
+
+Le coup racine qui mène au meilleur score (en supposant le pire de l'adversaire) est le coup choisi.
+
+Alpha-Bêta (élagage)
+
+Minimax pur explore tout l'arbre, ce qui est très coûteux (branching factor ~35 aux échecs). Alpha-bêta est une optimisation exacte (le résultat final est identique) qui coupe des branches inutiles.
+
+On garde deux valeurs pendant la descente :
+
+alpha : la meilleure valeur que le maximiseur est déjà sûr de pouvoir obtenir (borne inférieure).
+beta : la meilleure valeur que le minimiseur est déjà sûr de pouvoir obtenir (borne supérieure).
+
+Règle de coupure : si à un moment alpha >= beta, ça veut dire que l'adversaire (plus haut dans l'arbre) a déjà un moyen d'éviter cette branche — donc explorer le reste des enfants est inutile, on coupe ("pruning"). C'est ce qu'on appelle une coupure "beta" ou "alpha" selon le niveau.
+
+Concrètement dans le code : on passe alpha et beta en paramètres à chaque appel récursif, on les met à jour au fur et à mesure, et dès que alpha >= beta on arrête la boucle for move in board.legal_moves.
+
+La fonction d'évaluation evaluat()  :
+
+C'est le cœur de la "force" de ton IA à profondeur égale. Je vais implémenter :
+
+Matériel : somme des valeurs des pièces (pion=1, cavalier/fou=3, tour=5, dame=9), positif pour les Blancs, négatif pour les Noirs.
+Mobilité : léger bonus proportionnel au nombre de coups légaux disponibles (contrôle du plateau).
+
+
+
+
+
+
+
+
+
+
+
+
+Structure générale
+
+Un jeu d'échecs Blancs (humain) vs Noirs (IA), affiché avec pygame, la logique du jeu gérée par python-chess.
+
+Les deux fonctions clés (que j'ai implémentées)
+
+evaluat(board) — évalue une position
+
+Si la partie est finie → ±1000 (mat) ou 0 (nulle)
+Sinon → score matériel (pièces blanches − pièces noires, valeurs classiques 1/3/3.2/5/9) + petit bonus de mobilité (nombre de coups légaux du camp au trait)
+Positif = avantage Blancs, négatif = avantage Noirs
+
+alphabeta(board, depth, alpha, beta, maximizing) — explore l'arbre des coups
+
+S'arrête et appelle evaluat() quand depth == 0 ou partie finie
+Sinon, teste chaque coup légal (push/récursion/pop), garde le max si c'est aux Blancs de jouer, le min si c'est aux Noirs
+Coupe la boucle dès que alpha >= beta (élagage alpha-bêta) → évite d'explorer des branches inutiles
+
+searchBestMove(board) — point d'entrée appelé par la boucle de jeu
+
+Boucle sur les coups depuis la racine, appelle alphabeta pour chacun (profondeur SEARCH_DEPTH = 3)
+Garde le(s) meilleur(s) coup(s) et en choisit un au hasard en cas d'égalité
+Reste du fichier (inchangé)
+
+Boucle pygame : gère les clics souris (sélection de case → destination), fait jouer l'IA quand c'est son tour, redessine le plateau (SVG → PNG) à chaque frame, et affiche un message en cas de fin de partie.
+
+Testé
 
